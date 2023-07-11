@@ -1,25 +1,20 @@
 {
   "canisters": {
-    "dfx_react_template_rust_backend": {
-      "candid": "src/dfx_react_template_rust_backend/dfx_react_template_rust_backend.did",
-      "package": "dfx_react_template_rust_backend",
+    "dvote_backend": {
+      "candid": "src/dvote_backend/dvote_backend.did",
+      "package": "dvote_backend",
       "type": "rust"
     },
-    "dfx_react_template_backend": {
-      "main": "src/dfx_react_template_backend/main.mo",
-      "type": "motoko"
-    },
-    "dfx_react_template_frontend": {
+    "dvote_frontend": {
       "dependencies": [
-        "dfx_react_template_backend",
-        "dfx_react_template_rust_backend"
+        "dvote_backend"
       ],
       "frontend": {
-        "entrypoint": "src/dfx_react_template_frontend/src/index.html"
+        "entrypoint": "src/dvote_frontend/src/index.html"
       },
       "source": [
-        "src/dfx_react_template_frontend/assets",
-        "dist/dfx_react_template_frontend/"
+        "src/dvote_frontend/assets",
+        "dist/dvote_frontend/"
       ],
       "type": "assets"
     }

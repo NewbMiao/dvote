@@ -1,7 +1,7 @@
 import { Box, Input, Button, Typography, LinearProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { dfx_react_template_rust_backend } from "../../declarations/dfx_react_template_rust_backend";
-import { VoteItem } from "../../declarations/dfx_react_template_rust_backend/dfx_react_template_rust_backend.did";
+import { dvote_backend } from "../../declarations/dvote_backend";
+import { VoteItem } from "../../declarations/dvote_backend/dvote_backend.did";
 interface VoteItemWithPercent extends VoteItem {
   percent: number;
 }
@@ -10,11 +10,7 @@ const Vote = () => {
   const title = "select a,b,c?";
   useEffect(() => {
     (async () => {
-      const res = await dfx_react_template_rust_backend.addVote(title, [
-        "a",
-        "b",
-        "c",
-      ]);
+      const res = await dvote_backend.addVote(title, ["a", "b", "c"]);
     })();
   }, []);
   const updateVoteWithPercent = (votes: VoteItem[]) => {
@@ -34,13 +30,13 @@ const Vote = () => {
   };
   useEffect(() => {
     (async () => {
-      const res = await dfx_react_template_rust_backend.getVote(title);
+      const res = await dvote_backend.getVote(title);
       updateVoteWithPercent(res);
     })();
   }, []);
 
   const doVote = async (name: string) => {
-    const res = await dfx_react_template_rust_backend.vote(title, name);
+    const res = await dvote_backend.vote(title, name);
     updateVoteWithPercent(res);
   };
   return (

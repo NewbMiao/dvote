@@ -2,10 +2,7 @@ use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::{api, storage};
 use ic_cdk_macros::*;
 use std::{cell::RefCell, collections::BTreeMap};
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-    format!("Hello, {}! (from Rust)", name)
-}
+
 type VoteStore = BTreeMap<Principal, BTreeMap<String, Vec<VoteItem>>>;
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]

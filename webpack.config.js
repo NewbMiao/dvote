@@ -7,7 +7,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-const frontendDirectory = "dfx_react_template_frontend";
+const frontendDirectory = "dvote_frontend";
 
 const frontend_entry = path.join("src", frontendDirectory, "src", "index.html");
 

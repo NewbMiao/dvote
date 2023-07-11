@@ -3,7 +3,6 @@ type VoteItem = record {
     "count" : nat64;
 };
 service : {
-    "greet" : (text) -> (text) query;
     "getVote" : (text) -> (vec VoteItem) query;
     "addVote" : (text, vec text) -> (vec VoteItem);
     "vote" : (text, text) -> (vec VoteItem);
