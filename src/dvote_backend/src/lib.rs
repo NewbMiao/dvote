@@ -83,11 +83,16 @@ impl VoteRecord {
         }
     }
     pub fn add_vote_item(&mut self, name: String) {
-        self.items.push(VoteItem {
-            index: self.items.len(),
-            name,
-            count: 0,
-        })
+        if !self.is_duplicate(name.clone()) {
+            self.items.push(VoteItem {
+                index: self.items.len(),
+                name,
+                count: 0,
+            })
+        }
+    }
+    pub fn is_duplicate(&self, name: String) -> bool {
+        self.items.iter().any(|item| item.name == name)
     }
     pub fn do_vote(&mut self, index: usize) {
         // check index is in range

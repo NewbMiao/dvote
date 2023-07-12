@@ -16,5 +16,5 @@ type VoteRecord = record {
 service : {
     "getVote" : (text) -> (opt VoteRecord) query;
     "createVote" : (text, vec text) -> (VoteRecord);
-    "vote" : (text, nat) -> (VoteRecord);
+    "vote" : (text, nat64) -> (VoteRecord);
 };

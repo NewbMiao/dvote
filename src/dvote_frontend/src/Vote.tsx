@@ -46,7 +46,10 @@ const Vote = () => {
   }, [voteRecord?.hash]);
 
   const doVote = async (index: bigint) => {
-    const res = await dvote_backend.vote(title, index);
+    if (!voteRecord?.hash) {
+      return;
+    }
+    const res = await dvote_backend.vote(voteRecord.hash, index);
     updateVoteWithPercent(res);
   };
   return (
