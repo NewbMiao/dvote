@@ -1,9 +1,20 @@
 type VoteItem = record {
+    "index" : nat64;
     "name" : text;
     "count" : nat64;
 };
+type VoteRecord = record {
+    "created_by" : principal;
+    "created_at" : nat64;
+    "expired_at" : nat64;
+    "title" : text;
+    "max_selection" : nat8;
+    "hash" : text;
+    "public" : bool;
+    "items" : vec VoteItem;
+};
 service : {
-    "getVote" : (text) -> (vec VoteItem) query;
-    "addVote" : (text, vec text) -> (vec VoteItem);
-    "vote" : (text, text) -> (vec VoteItem);
+    "getVote" : (text) -> (opt VoteRecord) query;
+    "createVote" : (text, vec text) -> (VoteRecord);
+    "vote" : (text, nat) -> (VoteRecord);
 };

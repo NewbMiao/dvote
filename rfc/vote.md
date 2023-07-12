@@ -1,6 +1,7 @@
 # Vote RFC
 
-DVote is for voting on the blockchain, and the voting results are transparent and cannot be tampered with.
+DVote is for voting on the blockchain, and the voting results are transparent and cannot be tampered with. User can create a vote, and other users can vote for the vote. The vote can be public or private(only visible via link). The vote can be single selection or multiple selection. The vote can be expired at a specific time.
+
 
 ## Data Structure
 

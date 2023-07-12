@@ -1,25 +1,31 @@
-import { Box, Input, Button, Typography, LinearProgress } from "@mui/material";
+import { Box, Typography, LinearProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { dvote_backend } from "../../declarations/dvote_backend";
-import { VoteItem } from "../../declarations/dvote_backend/dvote_backend.did";
+import {
+  VoteItem,
+  VoteRecord,
+} from "../../declarations/dvote_backend/dvote_backend.did";
 interface VoteItemWithPercent extends VoteItem {
   percent: number;
 }
 const Vote = () => {
   const [votes, setVotes] = useState<VoteItemWithPercent[]>();
+  const [voteRecord, setVoteRecord] = useState<VoteRecord>();
   const title = "select a,b,c?";
   useEffect(() => {
     (async () => {
-      const res = await dvote_backend.addVote(title, ["a", "b", "c"]);
+      const res = await dvote_backend.createVote(title, ["a", "b", "c"]);
+      res && setVoteRecord(res);
+      console.log(res, "createVote");
     })();
   }, []);
-  const updateVoteWithPercent = (votes: VoteItem[]) => {
+  const updateVoteWithPercent = (voteRecord: VoteRecord) => {
     // sum count of each item
-    const sum = votes.reduce((acc, item) => {
+    const sum = voteRecord.items.reduce((acc, item) => {
       return acc + Number(item.count);
     }, 0);
 
-    const tmp: VoteItemWithPercent[] = votes.map((item) => {
+    const tmp: VoteItemWithPercent[] = voteRecord.items.map((item) => {
       return {
         ...item,
         percent:
@@ -29,14 +35,18 @@ const Vote = () => {
     setVotes(tmp);
   };
   useEffect(() => {
+    if (!voteRecord?.hash) return;
     (async () => {
-      const res = await dvote_backend.getVote(title);
-      updateVoteWithPercent(res);
+      const res = await dvote_backend.getVote(voteRecord.hash);
+      console.log(res, "getVote");
+      if (res[0]) {
+        updateVoteWithPercent(res[0]);
+      }
     })();
-  }, []);
+  }, [voteRecord?.hash]);
 
-  const doVote = async (name: string) => {
-    const res = await dvote_backend.vote(title, name);
+  const doVote = async (index: bigint) => {
+    const res = await dvote_backend.vote(title, index);
     updateVoteWithPercent(res);
   };
   return (
@@ -52,9 +62,9 @@ const Vote = () => {
         {votes?.map((item) => {
           return (
             <Typography
-              key={item.name}
+              key={item.index.toString()}
               onClick={async () => {
-                await doVote(item.name);
+                await doVote(item.index);
               }}
             >
               {item.name} : {item.percent.toFixed(2)}%({item.count.toString()})
