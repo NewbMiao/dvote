@@ -1,20 +1,18 @@
-type VoteItem = record {
-    "index" : nat64;
-    "name" : text;
-    "count" : nat64;
-};
+type Result = variant { Ok : VoteRecord; Err : VoteError };
+type VoteError = variant { NotFound : text; Other : text; BadRequest : text };
+type VoteItem = record { name : text; count : nat64; index : nat64 };
 type VoteRecord = record {
-    "created_by" : principal;
-    "created_at" : nat64;
-    "expired_at" : nat64;
-    "title" : text;
-    "max_selection" : nat8;
-    "hash" : text;
-    "public" : bool;
-    "items" : vec VoteItem;
+    title : text;
+    hash : text;
+    public : bool;
+    created_at : nat64;
+    created_by : principal;
+    items : vec VoteItem;
+    expired_at : nat64;
+    max_selection : nat8;
 };
 service : {
-    "getVote" : (text) -> (opt VoteRecord) query;
-    "createVote" : (text, vec text) -> (VoteRecord);
-    "vote" : (text, nat64) -> (VoteRecord);
+    "createVote" : (text, vec text) -> (Result);
+    "getVote" : (text) -> (Result) query;
+    "vote" : (text, nat64) -> (Result);
 };

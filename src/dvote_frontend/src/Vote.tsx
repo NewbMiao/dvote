@@ -5,18 +5,23 @@ import {
   VoteItem,
   VoteRecord,
 } from "../../declarations/dvote_backend/dvote_backend.did";
+import { getErrorMessage } from "./utils";
 interface VoteItemWithPercent extends VoteItem {
   percent: number;
 }
 const Vote = () => {
   const [votes, setVotes] = useState<VoteItemWithPercent[]>();
   const [voteRecord, setVoteRecord] = useState<VoteRecord>();
-  const title = "select a,b,c?";
+  const title = "select a,b,c ?";
   useEffect(() => {
     (async () => {
       const res = await dvote_backend.createVote(title, ["a", "b", "c"]);
-      res && setVoteRecord(res);
+      if ("Err" in res) {
+        alert(getErrorMessage(res.Err));
+        return;
+      }
       console.log(res, "createVote");
+      res.Ok && setVoteRecord(res.Ok);
     })();
   }, []);
   const updateVoteWithPercent = (voteRecord: VoteRecord) => {
@@ -39,8 +44,12 @@ const Vote = () => {
     (async () => {
       const res = await dvote_backend.getVote(voteRecord.hash);
       console.log(res, "getVote");
-      if (res[0]) {
-        updateVoteWithPercent(res[0]);
+      if ("Err" in res) {
+        alert(getErrorMessage(res.Err));
+        return;
+      }
+      if (res.Ok) {
+        updateVoteWithPercent(res.Ok);
       }
     })();
   }, [voteRecord?.hash]);
@@ -49,8 +58,17 @@ const Vote = () => {
     if (!voteRecord?.hash) {
       return;
     }
-    const res = await dvote_backend.vote(voteRecord.hash, index);
-    updateVoteWithPercent(res);
+    try {
+      const res = await dvote_backend.vote(voteRecord.hash, index);
+      if ("Err" in res) {
+        alert(getErrorMessage(res.Err));
+        return;
+      }
+      console.log(res, "doVote");
+      res.Ok && updateVoteWithPercent(res.Ok);
+    } catch (error) {
+      console.log(error, "doVote error");
+    }
   };
   return (
     <Box

@@ -1,12 +1,20 @@
 use std::collections::BTreeMap;
 
 use candid::{CandidType, Principal};
-use ic_cdk::api;
+use ic_cdk::trap;
 use serde::Deserialize;
+
+use crate::timestamp::utc_sec;
 
 pub type UserVoteStore = BTreeMap<Principal, UserVoteRecord>; // The key is the user principal, the value is the hash of the vote record and the index of the voted item
 pub type VoteStore = BTreeMap<String, VoteRecord>; // The key is the hash of the vote record
 
+#[derive(CandidType, Deserialize, Debug)]
+pub enum VoteError {
+    NotFound(&'static str),
+    BadRequest(&'static str),
+    Other(&'static str),
+}
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct UserVoteRecord {
     pub owned: BTreeMap<String, Option<Vec<usize>>>,
@@ -40,26 +48,36 @@ impl UserVoteRecord {
     pub fn add_created_vote(&mut self, hash: String) {
         self.owned.insert(hash, None);
     }
-    pub fn add_created_vote_index(&mut self, hash: String, index: usize) {
+    pub fn add_created_vote_index(&mut self, hash: String, index: usize) -> bool {
         let vote = self
             .owned
             .get_mut(&hash)
-            .unwrap_or_else(|| panic!("Vote record not found: {}", hash));
+            .unwrap_or_else(|| trap("Vote record not found"));
         if vote.is_none() {
             *vote = Some(vec![]);
         }
-        vote.as_mut().unwrap().push(index);
+        let vote = vote.as_mut().unwrap();
+        if vote.contains(&index) {
+            return false;
+        }
+        vote.push(index);
+        true
     }
-    pub fn add_participated_vote(&mut self, hash: String, index: usize) {
+    pub fn add_participated_vote(&mut self, hash: String, index: usize) -> bool {
         let vote = self
             .participated
             .entry(hash)
             .or_insert(Some(vec![]))
             .as_mut()
             .unwrap();
+        if vote.contains(&index) {
+            return false;
+        }
         vote.push(index);
+        true
     }
 }
+
 impl VoteRecord {
     pub fn new(
         created_by: Principal,
@@ -69,7 +87,7 @@ impl VoteRecord {
         max_selection: u8,
         public: bool,
     ) -> Self {
-        let created_at = api::time();
+        let created_at = utc_sec();
         Self {
             created_by,
             created_at,
@@ -93,11 +111,10 @@ impl VoteRecord {
     pub fn is_duplicate(&self, name: String) -> bool {
         self.items.iter().any(|item| item.name == name)
     }
-    pub fn do_vote(&mut self, index: usize) {
-        // check index is in range
-        if index >= self.items.len() {
-            panic!("Index out of range: {}", index);
-        }
-        self.items[index].count += 1;
+    pub fn has_voted(&self) -> bool {
+        self.items.iter().any(|item| item.count > 0)
+    }
+    pub fn is_expired(&self) -> bool {
+        utc_sec() > self.expired_at
     }
 }
