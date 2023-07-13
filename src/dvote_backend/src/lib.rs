@@ -22,6 +22,29 @@ fn get_vote(hash: String) -> Result<VoteRecord, VoteError> {
         .ok_or(VoteError::NotFound("Vote record not found"))
 }
 
+#[candid_method(query, rename = "getMyVote")]
+#[query(name = "getMyVote")]
+fn get_my_vote() -> Result<UserVoteRecord, VoteError> {
+    let principal = api::caller();
+    USER_VOTE_STORE
+        .with(|store| store.borrow().get(&principal).cloned())
+        .ok_or(VoteError::NotFound("User vote record not found"))
+}
+
+#[candid_method(query, rename = "getPublicVote")]
+#[query(name = "getPublicVote")]
+fn get_public_vote() -> Result<VoteStore, VoteError> {
+    let principal = api::caller();
+    let votes = VOTE_STORE.with(|store| store.borrow().clone());
+    if votes.is_empty() {
+        return Err(VoteError::NotFound("No vote record found"));
+    }
+    Ok(votes
+        .into_iter()
+        .filter(|(_, v)| v.public && v.created_by != principal)
+        .collect())
+}
+
 #[candid_method(update, rename = "createVote")]
 #[update(name = "createVote")]
 fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteError> {
@@ -34,7 +57,7 @@ fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteErro
         let mut store = store.borrow_mut();
         let vote_record = store.entry(hash.to_string()).or_insert(VoteRecord::new(
             principal,
-            title,
+            title.clone(),
             hash.to_string(),
             expired_at,
             max_selection,
@@ -56,7 +79,7 @@ fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteErro
         USER_VOTE_STORE.with(|store| {
             let mut store = store.borrow_mut();
             let user_vote_record = store.entry(principal).or_insert(UserVoteRecord::new());
-            user_vote_record.add_created_vote(hash.to_string());
+            user_vote_record.add_created_vote(hash.to_string(), title);
         });
         Ok(vote_record.clone())
     })
@@ -91,7 +114,11 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
             let succeed = if vote_record.created_by == principal {
                 user_vote_record.add_created_vote_index(hash.clone(), index)
             } else {
-                user_vote_record.add_participated_vote(hash.clone(), index)
+                user_vote_record.add_participated_vote(
+                    hash.clone(),
+                    index,
+                    vote_record.title.clone(),
+                )
             };
             if !succeed {
                 return Err(VoteError::BadRequest(

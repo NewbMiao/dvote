@@ -11,8 +11,21 @@ type VoteRecord = record {
     expired_at : nat64;
     max_selection : nat8;
 };
+type MineResult = variant { Ok : UserVoteRecord; Err : VoteError };
+type ExploreResult = variant {
+    Ok : vec record { text; VoteRecord };
+    Err : VoteError;
+};
+type UserVoteItem = record { title : text; selected : vec nat64 };
+type UserVoteRecord = record {
+    participated : vec record { text; UserVoteItem };
+    owned : vec record { text; UserVoteItem };
+};
+
 service : {
-    "createVote" : (text, vec text) -> (Result);
-    "getVote" : (text) -> (Result) query;
-    "vote" : (text, nat64) -> (Result);
+    createVote : (text, vec text) -> (Result);
+    getVote : (text) -> (Result) query;
+    vote : (text, nat64) -> (Result);
+    getMyVote : () -> (MineResult) query;
+    getPublicVote : () -> (ExploreResult) query;
 };

@@ -17,10 +17,15 @@ pub enum VoteError {
 }
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct UserVoteRecord {
-    pub owned: BTreeMap<String, Option<Vec<usize>>>,
-    pub participated: BTreeMap<String, Option<Vec<usize>>>,
+    pub owned: BTreeMap<String, UserVoteItem>,
+    pub participated: BTreeMap<String, UserVoteItem>,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct UserVoteItem {
+    pub title: String,
+    pub selected: Vec<usize>,
+}
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct VoteRecord {
     pub created_by: Principal,
@@ -38,6 +43,22 @@ pub struct VoteItem {
     pub name: String,
     pub count: u64,
 }
+impl UserVoteItem {
+    pub fn new(title: String) -> Self {
+        Self {
+            title,
+            selected: vec![],
+        }
+    }
+    pub fn add_selected(&mut self, index: usize) -> bool {
+        let selected: &mut Vec<usize> = self.selected.as_mut();
+        if selected.contains(&index) {
+            return false;
+        }
+        selected.push(index);
+        true
+    }
+}
 impl UserVoteRecord {
     pub fn new() -> Self {
         Self {
@@ -45,36 +66,22 @@ impl UserVoteRecord {
             participated: BTreeMap::new(),
         }
     }
-    pub fn add_created_vote(&mut self, hash: String) {
-        self.owned.insert(hash, None);
+    pub fn add_created_vote(&mut self, hash: String, title: String) {
+        self.owned.insert(hash, UserVoteItem::new(title));
     }
     pub fn add_created_vote_index(&mut self, hash: String, index: usize) -> bool {
         let vote = self
             .owned
             .get_mut(&hash)
             .unwrap_or_else(|| trap("Vote record not found"));
-        if vote.is_none() {
-            *vote = Some(vec![]);
-        }
-        let vote = vote.as_mut().unwrap();
-        if vote.contains(&index) {
-            return false;
-        }
-        vote.push(index);
-        true
+        vote.add_selected(index)
     }
-    pub fn add_participated_vote(&mut self, hash: String, index: usize) -> bool {
+    pub fn add_participated_vote(&mut self, hash: String, index: usize, title: String) -> bool {
         let vote = self
             .participated
             .entry(hash)
-            .or_insert(Some(vec![]))
-            .as_mut()
-            .unwrap();
-        if vote.contains(&index) {
-            return false;
-        }
-        vote.push(index);
-        true
+            .or_insert(UserVoteItem::new(title));
+        vote.add_selected(index)
     }
 }
 

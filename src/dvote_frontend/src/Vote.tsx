@@ -1,4 +1,4 @@
-import { Box, Typography, LinearProgress } from "@mui/material";
+import { Box, Typography, LinearProgress, Container } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { dvote_backend } from "../../declarations/dvote_backend";
 import {
@@ -71,34 +71,39 @@ const Vote = () => {
     }
   };
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <Typography>
-        Vote {title}:
-        {votes?.map((item) => {
-          return (
-            <Typography
-              key={item.index.toString()}
-              onClick={async () => {
-                await doVote(item.index);
-              }}
-            >
-              {item.name} : {item.percent.toFixed(2)}%({item.count.toString()})
-              <LinearProgress
-                sx={{ height: 15, width: 150 }}
-                variant="determinate"
-                value={item.percent}
-              />
-            </Typography>
-          );
-        })}
-      </Typography>
-    </Box>
+    <Container maxWidth="sm">
+      <Box sx={{ my: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography>
+            Vote {title}:
+            {votes?.map((item) => {
+              return (
+                <Typography
+                  key={item.index.toString()}
+                  onClick={async () => {
+                    await doVote(item.index);
+                  }}
+                >
+                  {item.name} : {item.percent.toFixed(2)}%(
+                  {item.count.toString()})
+                  <LinearProgress
+                    sx={{ height: 15, width: 150 }}
+                    variant="determinate"
+                    value={item.percent}
+                  />
+                </Typography>
+              );
+            })}
+          </Typography>
+        </Box>
+      </Box>
+    </Container>
   );
 };
 export default Vote;

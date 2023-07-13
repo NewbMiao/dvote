@@ -44,10 +44,6 @@ struct VoteItem {
 
 Create a vote, the `title` is the title of the vote, and the `vote_items` is the list of vote items. The `vote_items` is a `Vec<String>`, and the maximum length is 255. The `VoteRecord` is the vote record, and the `hash` is the hash of the `created_by` and `title`.
 
-- `append_vote_item(hash: String, vote_items: Vec<String>) -> VoteRecord`
-
-Append the `vote_items` to the vote record by the `hash`. The `vote_items` is a `Vec<String>`, not modify the original `vote_items`
-
 - `delete_vote(hash: String) -> VoteRecord`
 
 Delete the vote record by the `hash`. only if the `created_by` is the same as the `caller` and no other user has voted for the vote record.
