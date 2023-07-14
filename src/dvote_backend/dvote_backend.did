@@ -1,31 +1,30 @@
 type Result = variant { Ok : VoteRecord; Err : VoteError };
-type VoteError = variant { NotFound : text; Other : text; BadRequest : text };
-type VoteItem = record { name : text; count : nat64; index : nat64 };
-type VoteRecord = record {
-    title : text;
-    hash : text;
-    public : bool;
-    created_at : nat64;
-    created_by : principal;
-    items : vec VoteItem;
-    expired_at : nat64;
-    max_selection : nat8;
-};
-type MineResult = variant { Ok : UserVoteRecord; Err : VoteError };
-type ExploreResult = variant {
-    Ok : vec record { text; VoteRecord };
-    Err : VoteError;
+type Result_1 = variant { Ok : UserVoteRecord; Err : VoteError };
+type Result_2 = variant {
+  Ok : vec record { text; VoteRecord };
+  Err : VoteError;
 };
 type UserVoteItem = record { title : text; selected : vec nat64 };
 type UserVoteRecord = record {
-    participated : vec record { text; UserVoteItem };
-    owned : vec record { text; UserVoteItem };
+  participated : vec record { text; UserVoteItem };
+  owned : vec record { text; UserVoteItem };
 };
-
+type VoteError = variant { NotFound : text; Other : text; BadRequest : text };
+type VoteItem = record { name : text; count : nat64; index : nat64 };
+type VoteRecord = record {
+  title : text;
+  hash : text;
+  public : bool;
+  created_at : nat64;
+  created_by : principal;
+  items : vec VoteItem;
+  expired_at : nat64;
+  max_selection : nat8;
+};
 service : {
-    createVote : (text, vec text) -> (Result);
-    getVote : (text) -> (Result) query;
-    vote : (text, nat64) -> (Result);
-    getMyVote : () -> (MineResult) query;
-    getPublicVote : () -> (ExploreResult) query;
-};
+  createVote : (text, vec text) -> (Result);
+  getMyVote : () -> (Result_1) query;
+  getPublicVote : () -> (Result_2) query;
+  getVote : (text) -> (Result) query;
+  vote : (text, nat64) -> (Result);
+}

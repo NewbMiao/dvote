@@ -2,7 +2,6 @@ import { Container, Box, Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { dvote_backend } from "../../declarations/dvote_backend";
 import {
-  MineResult,
   UserVoteRecord,
 } from "../../declarations/dvote_backend/dvote_backend.did";
 import { getErrorMessage } from "./utils";
