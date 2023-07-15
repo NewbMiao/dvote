@@ -14,6 +14,7 @@ const StyledLink = ({
     <Link
       reloadDocument
       to={`${to}`}
+      target={to.startsWith("http") ? "_blank" : undefined}
       {...rest}
       style={{
         color: "inherit",

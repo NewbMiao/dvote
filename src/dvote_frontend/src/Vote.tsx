@@ -82,38 +82,35 @@ const Vote = () => {
   };
   return (
     <Container maxWidth="sm">
-      <Box sx={{ my: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h4" my={1}>
-            {vote?.title}
-          </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h4" my={1}>
+          {vote?.title}
+        </Typography>
 
-          {vote?.items.map((item) => {
-            return (
-              <Typography
-                variant="h6"
-                key={item.index.toString()}
-                onClick={async () => {
-                  await doVote(item.index);
-                }}
-              >
-                {item.name} : {item.percent.toFixed(2)}% (
-                {item.count.toString()})
-                <LinearProgress
-                  sx={{ height: 20, width: 300, my: 1 }}
-                  variant="determinate"
-                  value={item.percent}
-                />
-              </Typography>
-            );
-          })}
-        </Box>
+        {vote?.items.map((item) => {
+          return (
+            <Typography
+              variant="h6"
+              key={item.index.toString()}
+              onClick={async () => {
+                await doVote(item.index);
+              }}
+            >
+              {item.name} : {item.percent.toFixed(2)}% ({item.count.toString()})
+              <LinearProgress
+                sx={{ height: 20, width: 300, my: 1 }}
+                variant="determinate"
+                value={item.percent}
+              />
+            </Typography>
+          );
+        })}
       </Box>
       <Processing open={loading} />
       {tips && (

@@ -20,7 +20,7 @@ const Explore = () => {
     })();
   }, []);
   return (
-    <Box sx={{ my: 2 }}>
+    <Box>
       {votes && <ListCard items={votes}></ListCard>}
       {tips && (
         <Tips

@@ -6,7 +6,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     <Container maxWidth="lg">
       <Box
         sx={{
-          my: 2,
+          my: 1,
         }}
       >
         {children}

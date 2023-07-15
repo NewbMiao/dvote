@@ -61,10 +61,33 @@
     js-sha256 "0.9.0"
     simple-cbor "^0.4.1"
 
+"@dfinity/auth-client@^0.18.0":
+  version "0.18.0"
+  resolved "https://registry.yarnpkg.com/@dfinity/auth-client/-/auth-client-0.18.0.tgz#bd54d448344d9d1b53cdcab4648510257679bc09"
+  integrity sha512-sZFRp6Bg//QkM86fbPVPJPxY7X9JnHlkWkCyTC3f2njViPiUklvjZJA8ZCvf19dBxe1DrdntCxK7xsTmX2jqUA==
+  dependencies:
+    idb "^7.0.2"
+
+"@dfinity/authentication@^0.14.2":
+  version "0.14.2"
+  resolved "https://registry.yarnpkg.com/@dfinity/authentication/-/authentication-0.14.2.tgz#ce8d283693344dfcd444346832b128ef6382e3cb"
+  integrity sha512-kiZrRKUOnbseTQiAh4GDkAo5vCX6dUN1jkqJ5rLBYkIiGuK3jENxbu4G5oJPxq57F/cgnR4Hx/abSVHQfFRkEw==
+  dependencies:
+    "@dfinity/identity" "^0.15.1"
+
 "@dfinity/candid@^0.17.0":
   version "0.17.0"
   resolved "https://registry.yarnpkg.com/@dfinity/candid/-/candid-0.17.0.tgz#670e4c63ff64753d10dcf265995568881a393e10"
   integrity sha512-JPcj+1Kcb0+wo4GiDpDJzeCnxxRtSot5G64hzUlu4zqWEeE0OBh9hW0Pns3Np0RKJ5Sbgz+CYzLc+rm7AOy8OA==
+
+"@dfinity/identity@^0.15.1":
+  version "0.15.7"
+  resolved "https://registry.yarnpkg.com/@dfinity/identity/-/identity-0.15.7.tgz#af8bf3f8e69f22e3cee08abb3a33851a6bc07c92"
+  integrity sha512-kBAkx9wq78jSQf6T5aayLyWm8YgtOZw8bW6+OuzX6tR3hkAEa85A9TcKA7BjkmMWSIskjEDVQub4fFfKWS2vOQ==
+  dependencies:
+    borc "^2.1.1"
+    js-sha256 "^0.9.0"
+    tweetnacl "^1.0.1"
 
 "@dfinity/principal@^0.17.0":
   version "0.17.0"
@@ -1997,6 +2020,11 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
+idb@^7.0.2:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/idb/-/idb-7.1.1.tgz#d910ded866d32c7ced9befc5bfdf36f572ced72b"
+  integrity sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==
+
 ieee754@^1.1.13, ieee754@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.2.1.tgz#8eb7a10a63fff25d15a57b001586d177d1b0d352"
@@ -3264,6 +3292,11 @@ tslib@^2.0.3:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.0.tgz#b295854684dbda164e181d259a22cd779dcd7bc3"
   integrity sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==
+
+tweetnacl@^1.0.1:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
+  integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
 type-is@~1.6.18:
   version "1.6.18"

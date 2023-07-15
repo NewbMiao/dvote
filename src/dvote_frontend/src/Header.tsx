@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -12,39 +12,49 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import { Link, useLocation } from "react-router-dom";
 import StyledLink from "./components/StyledLink";
+import { AuthContext } from "./components/AuthProvider";
 
 const navItems = [
   { name: "Create", path: "/create" },
   { name: "Explore", path: "/" },
   { name: "Mine", path: "/mine" },
-  { name: "About", path: "/about" },
+  { name: "About", path: "https://github.com/NewbMiao/dvote" },
 ];
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-
+  const authContext = useContext(AuthContext);
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
   };
+  const handleLogin = () => !authContext.loggedIn && authContext.login();
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        D-Vote
+        D-VOTE
       </Typography>
       <Divider />
       <List>
         {navItems.map((item) => (
           <ListItem key={item.name} disablePadding>
-            <ListItemButton sx={{ textAlign: "center" }}>
+            <ListItemButton>
               <StyledLink key={item.name} to={item.path}>
                 <ListItemText primary={item.name} />
               </StyledLink>
             </ListItemButton>
           </ListItem>
         ))}
+        <ListItem
+          key={"Login"}
+          disablePadding
+          sx={{ textAlign: "left", display: "flex" }}
+        >
+          <ListItemButton>
+            <ListItemText primary={"Login"} onClick={handleLogin} />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
@@ -72,7 +82,7 @@ export default function Header() {
             component="div"
             sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
           >
-            D-Vote
+            D-VOTE
           </Typography>
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             {navItems.map((item) => (
@@ -82,6 +92,9 @@ export default function Header() {
                 </Button>
               </StyledLink>
             ))}
+            <Button key={"Login"} sx={{ color: "#fff" }} onClick={handleLogin}>
+              Login
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>

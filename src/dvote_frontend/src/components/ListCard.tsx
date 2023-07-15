@@ -4,12 +4,13 @@ import {
   Card,
   CardActions,
   CardContent,
+  CardHeader,
   Grid,
   Typography,
 } from "@mui/material";
 import React from "react";
 import StyledLink from "./StyledLink";
-import { getColorFromString } from "./theme";
+import { getColorFromString, hexToRgba } from "./theme";
 const ListCard = ({
   items,
 }: {
@@ -36,10 +37,16 @@ const ListCard = ({
             }}
             key={hash}
           >
+            <CardHeader
+              sx={{
+                backgroundColor: hexToRgba(getColorFromString(title), 0.6),
+              }}
+            ></CardHeader>
             <CardContent>
               <Typography
                 variant="h5"
-                color={getColorFromString(title)}
+                // color={getColorFromString(title)}
+                my={2}
                 gutterBottom
               >
                 {title}
