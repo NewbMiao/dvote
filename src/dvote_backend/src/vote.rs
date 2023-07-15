@@ -37,6 +37,15 @@ pub struct VoteRecord {
     pub public: bool, // if true, the vote record will be public in the list, otherwise private only visible via link
     pub items: Vec<VoteItem>,
 }
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct CreateVoteRecord {
+    pub expired_at: u64,
+    pub title: String,
+    pub max_selection: u8, // default is 1
+    pub public: bool, // if true, the vote record will be public in the list, otherwise private only visible via link
+    pub names: Vec<String>,
+}
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct VoteItem {
     pub index: usize,

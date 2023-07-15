@@ -7,7 +7,7 @@ use ic_cdk::{api, storage};
 use ic_cdk_macros::*;
 use std::cell::RefCell;
 use timestamp::utc_sec_with_offset;
-use vote::{UserVoteRecord, UserVoteStore, VoteError, VoteRecord, VoteStore};
+use vote::{CreateVoteRecord, UserVoteRecord, UserVoteStore, VoteError, VoteRecord, VoteStore};
 thread_local! {
     static VOTE_STORE: RefCell<VoteStore> = RefCell::default();
     static USER_VOTE_STORE: RefCell<UserVoteStore> = RefCell::default();
@@ -47,16 +47,16 @@ fn get_public_vote() -> Result<Vec<VoteRecord>, VoteError> {
 
     Ok(votes
         .into_iter()
-        .filter(|(_, v)| v.public && v.created_by != principal)
+        // .filter(|(_, v)| v.public && v.created_by != principal)
         .map(|(_, v)| v)
         .collect::<Vec<VoteRecord>>())
 }
 
 #[candid_method(update, rename = "createVote")]
 #[update(name = "createVote")]
-fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteError> {
+fn create_vote(vote_req: CreateVoteRecord) -> Result<VoteRecord, VoteError> {
     let principal = api::caller();
-    let hash = hash_string(&format!("{}{}", principal, title));
+    let hash = hash_string(&format!("{}{}", principal, vote_req.title.clone()));
     let expired_at = utc_sec_with_offset(60 * 60 * 24 * 7); // 7 days
     let max_selection = 1;
     let public = true;
@@ -64,7 +64,7 @@ fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteErro
         let mut store = store.borrow_mut();
         let vote_record = store.entry(hash.to_string()).or_insert(VoteRecord::new(
             principal,
-            title.clone(),
+            vote_req.title.clone(),
             hash.to_string(),
             expired_at,
             max_selection,
@@ -80,13 +80,13 @@ fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteErro
                 "Vote record already has expired, not allowed to add more items",
             ));
         }
-        names.into_iter().for_each(|name| {
+        vote_req.names.into_iter().for_each(|name| {
             vote_record.add_vote_item(name);
         });
         USER_VOTE_STORE.with(|user_store| {
             let mut user_store = user_store.borrow_mut();
             let user_vote_record = user_store.entry(principal).or_insert(UserVoteRecord::new());
-            user_vote_record.add_created_vote(hash.to_string(), title);
+            user_vote_record.add_created_vote(hash.to_string(), vote_req.title.clone());
         });
         Ok(vote_record.clone())
     })

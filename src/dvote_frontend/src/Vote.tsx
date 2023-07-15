@@ -27,21 +27,7 @@ const Vote = () => {
   const [vote, setVote] = useState<VoteRecordWithPercent>();
   const [loading, setLoading] = useState(false);
   const [tips, setTips] = useState<TipsProps>();
-  // useEffect(() => {
-  //   (async () => {
-  //     for (let i = 0; i < 1; i++) {
-  //       const res = await dvote_backend.createVote(
-  //         getRandomAlphabet() + "test abc ?",
-  //         ["a", "b", "c"]
-  //       );
-  //       if ("Err" in res) {
-  //         setTips({message:getErrorMessage(res.Err)});
-  //         return;
-  //       }
-  //       console.log(res, "createVote");
-  //     }
-  //   })();
-  // }, []);
+
   const updateVoteWithPercent = (voteRecord: VoteRecord) => {
     const sum = voteRecord.items.reduce((acc, item) => {
       return acc + Number(item.count);

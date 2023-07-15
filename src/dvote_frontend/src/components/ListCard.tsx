@@ -18,7 +18,18 @@ const ListCard = ({
   return (
     <Grid container spacing={2} rowSpacing={2}>
       {items.map(({ title, hash }) => (
-        <Grid key={hash} item xs={12} sm={6} md={4} lg={3}>
+        <Grid
+          key={hash}
+          item
+          xs={12}
+          sm={6}
+          md={4}
+          lg={3}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
           <Card
             sx={{
               width: 280,

@@ -4,7 +4,13 @@ import React, { ReactNode } from "react";
 const Layout = ({ children }: { children: ReactNode }) => {
   return (
     <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>{children}</Box>
+      <Box
+        sx={{
+          my: 2,
+        }}
+      >
+        {children}
+      </Box>
     </Container>
   );
 };

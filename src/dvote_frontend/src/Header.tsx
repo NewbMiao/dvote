@@ -16,6 +16,7 @@ import { Link, useLocation } from "react-router-dom";
 import StyledLink from "./components/StyledLink";
 
 const navItems = [
+  { name: "Create", path: "/create" },
   { name: "Explore", path: "/" },
   { name: "Mine", path: "/mine" },
   { name: "About", path: "/about" },
