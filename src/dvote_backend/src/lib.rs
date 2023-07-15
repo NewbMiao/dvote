@@ -8,7 +8,6 @@ use ic_cdk_macros::*;
 use std::cell::RefCell;
 use timestamp::utc_sec_with_offset;
 use vote::{UserVoteRecord, UserVoteStore, VoteError, VoteRecord, VoteStore};
-
 thread_local! {
     static VOTE_STORE: RefCell<VoteStore> = RefCell::default();
     static USER_VOTE_STORE: RefCell<UserVoteStore> = RefCell::default();
@@ -17,32 +16,40 @@ thread_local! {
 #[candid_method(query, rename = "getVote")]
 #[query(name = "getVote")]
 fn get_vote(hash: String) -> Result<VoteRecord, VoteError> {
-    VOTE_STORE
-        .with(|store| store.borrow().get(&hash).cloned())
-        .ok_or(VoteError::NotFound("Vote record not found"))
+    VOTE_STORE.with(|store| {
+        let tmp = store.borrow().get(&hash).cloned();
+        tmp.ok_or(VoteError::NotFound("Vote record not found"))
+    })
 }
 
 #[candid_method(query, rename = "getMyVote")]
 #[query(name = "getMyVote")]
 fn get_my_vote() -> Result<UserVoteRecord, VoteError> {
     let principal = api::caller();
-    USER_VOTE_STORE
-        .with(|store| store.borrow().get(&principal).cloned())
-        .ok_or(VoteError::NotFound("User vote record not found"))
+    USER_VOTE_STORE.with(|store| {
+        store
+            .borrow()
+            .get(&principal)
+            .cloned()
+            .ok_or(VoteError::NotFound("No vote record found"))
+    })
 }
 
 #[candid_method(query, rename = "getPublicVote")]
 #[query(name = "getPublicVote")]
-fn get_public_vote() -> Result<VoteStore, VoteError> {
+fn get_public_vote() -> Result<Vec<VoteRecord>, VoteError> {
     let principal = api::caller();
     let votes = VOTE_STORE.with(|store| store.borrow().clone());
     if votes.is_empty() {
         return Err(VoteError::NotFound("No vote record found"));
     }
+    // filter out the vote records created by the caller
+
     Ok(votes
         .into_iter()
         .filter(|(_, v)| v.public && v.created_by != principal)
-        .collect())
+        .map(|(_, v)| v)
+        .collect::<Vec<VoteRecord>>())
 }
 
 #[candid_method(update, rename = "createVote")]
@@ -76,9 +83,9 @@ fn create_vote(title: String, names: Vec<String>) -> Result<VoteRecord, VoteErro
         names.into_iter().for_each(|name| {
             vote_record.add_vote_item(name);
         });
-        USER_VOTE_STORE.with(|store| {
-            let mut store = store.borrow_mut();
-            let user_vote_record = store.entry(principal).or_insert(UserVoteRecord::new());
+        USER_VOTE_STORE.with(|user_store| {
+            let mut user_store = user_store.borrow_mut();
+            let user_vote_record = user_store.entry(principal).or_insert(UserVoteRecord::new());
             user_vote_record.add_created_vote(hash.to_string(), title);
         });
         Ok(vote_record.clone())
@@ -93,12 +100,12 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
         let mut store = store.borrow_mut();
         let vote_record = store
             .get_mut(&hash)
-            .ok_or(VoteError::NotFound("Vote record not found"))?;
+            .ok_or(VoteError::NotFound("Failed to vote, vote record not found"))?;
 
         // get vote record
         if vote_record.is_expired() {
             return Err(VoteError::BadRequest(
-                "Vote record already has expired, not allowed to vote",
+                "Vote has already expired, not allowed to vote anymore",
             ));
         }
         // voting
@@ -108,9 +115,9 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
             ));
         }
         // update user vote record
-        USER_VOTE_STORE.with(|store| {
-            let mut store = store.borrow_mut();
-            let user_vote_record = store.entry(principal).or_insert(UserVoteRecord::new());
+        USER_VOTE_STORE.with(|user_store| {
+            let mut user_store = user_store.borrow_mut();
+            let user_vote_record = user_store.entry(principal).or_insert(UserVoteRecord::new());
             let succeed = if vote_record.created_by == principal {
                 user_vote_record.add_created_vote_index(hash.clone(), index)
             } else {
@@ -121,9 +128,7 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
                 )
             };
             if !succeed {
-                return Err(VoteError::BadRequest(
-                    "User already voted for this vote record",
-                ));
+                return Err(VoteError::BadRequest("You already voted for this vote"));
             }
             vote_record.items[index].count += 1;
             Ok(vote_record.clone())
@@ -133,16 +138,19 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    storage::stable_save((VOTE_STORE.with(|store| store.borrow().clone()),)).unwrap();
-    storage::stable_save((USER_VOTE_STORE.with(|store| store.borrow().clone()),)).unwrap();
+    let vote_store = VOTE_STORE.with(|store| store.borrow().clone());
+    let user_vote_store = USER_VOTE_STORE.with(|user_store| user_store.borrow().clone());
+
+    storage::stable_save((vote_store, user_vote_store)).unwrap();
 }
+
 #[post_upgrade]
 fn post_upgrade() {
-    if let Ok((vote_store,)) = storage::stable_restore::<(VoteStore,)>() {
+    if let Ok((vote_store, user_vote_store)) =
+        storage::stable_restore::<(VoteStore, UserVoteStore)>()
+    {
         VOTE_STORE.with(|store| *store.borrow_mut() = vote_store);
-    }
-    if let Ok((user_vote_store,)) = storage::stable_restore::<(UserVoteStore,)>() {
-        USER_VOTE_STORE.with(|store| *store.borrow_mut() = user_vote_store);
+        USER_VOTE_STORE.with(|user_store| *user_store.borrow_mut() = user_vote_store);
     }
 }
 

@@ -6,67 +6,91 @@ import {
   VoteRecord,
 } from "../../declarations/dvote_backend/dvote_backend.did";
 import { getErrorMessage } from "./utils";
+import { useParams } from "react-router-dom";
+import Processing from "./components/Processing";
+import Tips, { TipsProps } from "./components/Tips";
+interface VoteRecordWithPercent extends VoteRecord {
+  items: Array<VoteItemWithPercent>;
+}
+
 interface VoteItemWithPercent extends VoteItem {
   percent: number;
 }
+function getRandomAlphabet() {
+  const alphabets = "abcdefghijklmnopqrstuvwxyz";
+  const randomIndex = Math.floor(Math.random() * alphabets.length);
+  const randomAlphabet = alphabets[randomIndex].toUpperCase();
+  return randomAlphabet;
+}
 const Vote = () => {
-  const [votes, setVotes] = useState<VoteItemWithPercent[]>();
-  const [voteRecord, setVoteRecord] = useState<VoteRecord>();
-  const title = "select a,b,c ?";
-  useEffect(() => {
-    (async () => {
-      const res = await dvote_backend.createVote(title, ["a", "b", "c"]);
-      if ("Err" in res) {
-        alert(getErrorMessage(res.Err));
-        return;
-      }
-      console.log(res, "createVote");
-      res.Ok && setVoteRecord(res.Ok);
-    })();
-  }, []);
+  const { hash } = useParams<{ hash: string }>();
+  const [vote, setVote] = useState<VoteRecordWithPercent>();
+  const [loading, setLoading] = useState(false);
+  const [tips, setTips] = useState<TipsProps>();
+  // useEffect(() => {
+  //   (async () => {
+  //     for (let i = 0; i < 1; i++) {
+  //       const res = await dvote_backend.createVote(
+  //         getRandomAlphabet() + "test abc ?",
+  //         ["a", "b", "c"]
+  //       );
+  //       if ("Err" in res) {
+  //         setTips({message:getErrorMessage(res.Err)});
+  //         return;
+  //       }
+  //       console.log(res, "createVote");
+  //     }
+  //   })();
+  // }, []);
   const updateVoteWithPercent = (voteRecord: VoteRecord) => {
-    // sum count of each item
     const sum = voteRecord.items.reduce((acc, item) => {
       return acc + Number(item.count);
     }, 0);
 
-    const tmp: VoteItemWithPercent[] = voteRecord.items.map((item) => {
+    let tmp: VoteItemWithPercent[];
+    tmp = voteRecord.items.map((item) => {
       return {
         ...item,
         percent:
           Number(item.count) === 0 ? 0 : (Number(item.count) / sum) * 100,
       };
     });
-    setVotes(tmp);
+    setVote({ ...voteRecord, items: tmp });
   };
   useEffect(() => {
-    if (!voteRecord?.hash) return;
+    if (!hash) return;
     (async () => {
-      const res = await dvote_backend.getVote(voteRecord.hash);
-      console.log(res, "getVote");
+      const res = await dvote_backend.getVote(hash);
+      console.log(res, "getVote", hash);
       if ("Err" in res) {
-        alert(getErrorMessage(res.Err));
+        setTips({ message: getErrorMessage(res.Err), severity: "error" });
         return;
       }
       if (res.Ok) {
         updateVoteWithPercent(res.Ok);
       }
     })();
-  }, [voteRecord?.hash]);
+  }, []);
 
   const doVote = async (index: bigint) => {
-    if (!voteRecord?.hash) {
+    if (!hash) {
       return;
     }
     try {
-      const res = await dvote_backend.vote(voteRecord.hash, index);
+      setLoading(true);
+      const res = await dvote_backend.vote(hash, index);
+      setLoading(false);
+
       if ("Err" in res) {
-        alert(getErrorMessage(res.Err));
+        setTips({ message: getErrorMessage(res.Err) });
         return;
       }
+      setTips({ message: "vote succeed!", severity: "success" });
+
       console.log(res, "doVote");
       res.Ok && updateVoteWithPercent(res.Ok);
     } catch (error) {
+      setLoading(false);
       console.log(error, "doVote error");
     }
   };
@@ -80,29 +104,39 @@ const Vote = () => {
             alignItems: "center",
           }}
         >
-          <Typography>
-            Vote {title}:
-            {votes?.map((item) => {
-              return (
-                <Typography
-                  key={item.index.toString()}
-                  onClick={async () => {
-                    await doVote(item.index);
-                  }}
-                >
-                  {item.name} : {item.percent.toFixed(2)}%(
-                  {item.count.toString()})
-                  <LinearProgress
-                    sx={{ height: 15, width: 150 }}
-                    variant="determinate"
-                    value={item.percent}
-                  />
-                </Typography>
-              );
-            })}
+          <Typography variant="h4" my={1}>
+            {vote?.title}
           </Typography>
+
+          {vote?.items.map((item) => {
+            return (
+              <Typography
+                variant="h6"
+                key={item.index.toString()}
+                onClick={async () => {
+                  await doVote(item.index);
+                }}
+              >
+                {item.name} : {item.percent.toFixed(2)}% (
+                {item.count.toString()})
+                <LinearProgress
+                  sx={{ height: 20, width: 300, my: 1 }}
+                  variant="determinate"
+                  value={item.percent}
+                />
+              </Typography>
+            );
+          })}
         </Box>
       </Box>
+      <Processing open={loading} />
+      {tips && (
+        <Tips
+          message={tips.message}
+          severity={tips.severity}
+          onClose={() => setTips(undefined)}
+        />
+      )}
     </Container>
   );
 };

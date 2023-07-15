@@ -13,7 +13,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { Link, useLocation } from "react-router-dom";
-import LinkWithQuery from "./LinkWithQuery";
+import StyledLink from "./components/StyledLink";
 
 const navItems = [
   { name: "Explore", path: "/" },
@@ -38,9 +38,9 @@ export default function Header() {
         {navItems.map((item) => (
           <ListItem key={item.name} disablePadding>
             <ListItemButton sx={{ textAlign: "center" }}>
-              <LinkWithQuery key={item.name} to={item.path}>
+              <StyledLink key={item.name} to={item.path}>
                 <ListItemText primary={item.name} />
-              </LinkWithQuery>
+              </StyledLink>
             </ListItemButton>
           </ListItem>
         ))}
@@ -75,11 +75,11 @@ export default function Header() {
           </Typography>
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             {navItems.map((item) => (
-              <LinkWithQuery key={item.name} to={item.path}>
+              <StyledLink key={item.name} to={item.path}>
                 <Button key={item.name} sx={{ color: "#fff" }}>
                   {item.name}
                 </Button>
-              </LinkWithQuery>
+              </StyledLink>
             ))}
           </Box>
         </Toolbar>

@@ -73,7 +73,7 @@ impl UserVoteRecord {
         let vote = self
             .owned
             .get_mut(&hash)
-            .unwrap_or_else(|| trap("Vote record not found"));
+            .unwrap_or_else(|| trap("Failed to vote, vote record not found"));
         vote.add_selected(index)
     }
     pub fn add_participated_vote(&mut self, hash: String, index: usize, title: String) -> bool {

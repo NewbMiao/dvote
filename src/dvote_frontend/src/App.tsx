@@ -1,16 +1,12 @@
 import React from "react";
 import Vote from "./Vote";
-import {
-  BrowserRouter,
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
-import ErrorPage from "./ErrorPage";
+import { createHashRouter, HashRouter, RouterProvider } from "react-router-dom";
+import ErrorPage from "./components/ErrorPage";
 import Header from "./Header";
 import Explore from "./Explore";
 import Mine from "./Mine";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Explore />,
@@ -29,9 +25,9 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <React.StrictMode>
-      <BrowserRouter>
+      <HashRouter>
         <Header />
-      </BrowserRouter>
+      </HashRouter>
       <RouterProvider router={router} />
     </React.StrictMode>
   );

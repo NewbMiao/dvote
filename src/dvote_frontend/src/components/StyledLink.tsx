@@ -1,7 +1,7 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-const LinkWithQuery = ({
+const StyledLink = ({
   to,
   children,
   ...rest
@@ -10,13 +10,11 @@ const LinkWithQuery = ({
   children: React.ReactNode;
   [x: string]: any;
 }) => {
-  const { search } = useLocation();
-
   return (
     <Link
-      to={`${to}${search}`}
-      {...rest}
       reloadDocument
+      to={`${to}`}
+      {...rest}
       style={{
         color: "inherit",
         textDecoration: "inherit",
@@ -26,4 +24,4 @@ const LinkWithQuery = ({
     </Link>
   );
 };
-export default LinkWithQuery;
+export default StyledLink;

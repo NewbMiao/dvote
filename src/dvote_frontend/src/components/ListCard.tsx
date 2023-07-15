@@ -1,0 +1,50 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Grid,
+  Typography,
+} from "@mui/material";
+import React from "react";
+import StyledLink from "./StyledLink";
+import { getColorFromString } from "./theme";
+const ListCard = ({
+  items,
+}: {
+  items: Array<{ title: string; hash: string }>;
+}) => {
+  return (
+    <Grid container spacing={2} rowSpacing={2}>
+      {items.map(({ title, hash }) => (
+        <Grid key={hash} item xs={12} sm={6} md={4} lg={3}>
+          <Card
+            sx={{
+              width: 280,
+            }}
+            key={hash}
+          >
+            <CardContent>
+              <Typography
+                variant="h5"
+                color={getColorFromString(title)}
+                gutterBottom
+              >
+                {title}
+              </Typography>
+
+              <Typography variant="subtitle2">{hash}</Typography>
+            </CardContent>
+            <CardActions>
+              <StyledLink to={`/vote/${hash}`}>
+                <Button>See detail</Button>
+              </StyledLink>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+export default ListCard;

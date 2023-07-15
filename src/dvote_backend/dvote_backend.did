@@ -1,9 +1,6 @@
 type Result = variant { Ok : VoteRecord; Err : VoteError };
 type Result_1 = variant { Ok : UserVoteRecord; Err : VoteError };
-type Result_2 = variant {
-  Ok : vec record { text; VoteRecord };
-  Err : VoteError;
-};
+type Result_2 = variant { Ok : vec VoteRecord; Err : VoteError };
 type UserVoteItem = record { title : text; selected : vec nat64 };
 type UserVoteRecord = record {
   participated : vec record { text; UserVoteItem };
@@ -28,3 +25,5 @@ service : {
   getVote : (text) -> (Result) query;
   vote : (text, nat64) -> (Result);
 }
+
+// https://github.com/dfinity/candid/blob/master/spec/Candid.md
