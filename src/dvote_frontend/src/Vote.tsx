@@ -1,6 +1,5 @@
 import { Box, Typography, LinearProgress, Container } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { dvote_backend } from "../../declarations/dvote_backend";
+import React, { useContext, useEffect, useState } from "react";
 import {
   VoteItem,
   VoteRecord,
@@ -9,6 +8,7 @@ import { getErrorMessage } from "./utils";
 import { useParams } from "react-router-dom";
 import Processing from "./components/Processing";
 import Tips, { TipsProps } from "./components/Tips";
+import { AuthContext } from "./components/AuthProvider";
 interface VoteRecordWithPercent extends VoteRecord {
   items: Array<VoteItemWithPercent>;
 }
@@ -27,6 +27,7 @@ const Vote = () => {
   const [vote, setVote] = useState<VoteRecordWithPercent>();
   const [loading, setLoading] = useState(false);
   const [tips, setTips] = useState<TipsProps>();
+  const { loggedIn, backendActor } = useContext(AuthContext);
 
   const updateVoteWithPercent = (voteRecord: VoteRecord) => {
     const sum = voteRecord.items.reduce((acc, item) => {
@@ -44,10 +45,10 @@ const Vote = () => {
     setVote({ ...voteRecord, items: tmp });
   };
   useEffect(() => {
-    if (!hash) return;
+    if (!hash || !backendActor) return;
     (async () => {
-      const res = await dvote_backend.getVote(hash);
-      console.log(res, "getVote", hash);
+      const res = await backendActor.getVote(hash);
+      console.log(res, "getVote", hash, await backendActor.whoami());
       if ("Err" in res) {
         setTips({ message: getErrorMessage(res.Err), severity: "error" });
         return;
@@ -56,15 +57,19 @@ const Vote = () => {
         updateVoteWithPercent(res.Ok);
       }
     })();
-  }, []);
+  }, [backendActor]);
 
   const doVote = async (index: bigint) => {
     if (!hash) {
       return;
     }
+    if (!loggedIn) {
+      setTips({ message: "Please login first!", severity: "error" });
+      return;
+    }
     try {
       setLoading(true);
-      const res = await dvote_backend.vote(hash, index);
+      const res = await backendActor.vote(hash, index);
       setLoading(false);
 
       if ("Err" in res) {

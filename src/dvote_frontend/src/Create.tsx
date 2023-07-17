@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   TextField,
   Checkbox,
@@ -11,10 +11,10 @@ import {
 import TimePicker from "./components/TimePicker";
 import RemoveIcon from "@mui/icons-material/Remove";
 import dayjs, { Dayjs } from "dayjs";
-import { dvote_backend } from "../../declarations/dvote_backend";
 import Tips, { TipsProps } from "./components/Tips";
 import { CreateVoteRecord } from "../../declarations/dvote_backend/dvote_backend.did";
 import { getErrorMessage } from "./utils";
+import { AuthContext } from "./components/AuthProvider";
 const Create = () => {
   const [title, setTitle] = useState("");
   const [maxSelection, setMaxSelection] = useState(1);
@@ -22,6 +22,7 @@ const Create = () => {
   const [expiredDate, setExpiredDate] = useState<Dayjs>(dayjs().add(7, "day"));
   const [items, setItems] = useState(["", ""]);
   const [tips, setTips] = useState<TipsProps>();
+  const { loggedIn, backendActor } = useContext(AuthContext);
 
   const handleItemsChange = (index: number) => (event: any) => {
     const newItems = [...items];
@@ -32,6 +33,10 @@ const Create = () => {
 
   const handleSubmit = async (event: any) => {
     event.preventDefault();
+    if (!loggedIn) {
+      setTips({ message: "Please login first!", severity: "error" });
+      return;
+    }
 
     // Create the VoteRecord object with the collected data
     const voteRecord = {
@@ -41,7 +46,7 @@ const Create = () => {
       public: publicVote,
       names: items.filter((item) => item !== "").map((item) => item.trim()),
     } as CreateVoteRecord;
-    const res = await dvote_backend.createVote(voteRecord);
+    const res = await backendActor.createVote(voteRecord);
     if ("Err" in res) {
       setTips({ message: getErrorMessage(res.Err) });
       return;

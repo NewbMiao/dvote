@@ -92,6 +92,22 @@ impl UserVoteRecord {
             .or_insert(UserVoteItem::new(title));
         vote.add_selected(index)
     }
+    pub fn count_participated_vote(&self, hash: String) -> u8 {
+        // count the number of selected items no error
+        let vote = self.participated.get(&hash);
+        match vote {
+            Some(vote) => vote.selected.len() as u8,
+            None => 0,
+        }
+    }
+    pub fn count_owned_vote(&self, hash: String) -> u8 {
+        // count the number of selected items no error
+        let vote = self.owned.get(&hash);
+        match vote {
+            Some(vote) => vote.selected.len() as u8,
+            None => 0,
+        }
+    }
 }
 
 impl VoteRecord {

@@ -1,12 +1,11 @@
-import { Container, Box, Button, Chip } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { dvote_backend } from "../../declarations/dvote_backend";
+import { Box, Chip } from "@mui/material";
+import React, { useContext, useEffect, useState } from "react";
 import { UserVoteRecord } from "../../declarations/dvote_backend/dvote_backend.did";
 import { getErrorMessage } from "./utils";
-import StyledLink from "./components/StyledLink";
 import { MineListType } from "./interface";
 import ListCard from "./components/ListCard";
 import Tips, { TipsProps } from "./components/Tips";
+import { AuthContext } from "./components/AuthProvider";
 const SelectTab = ({
   selected,
   tabIndex,
@@ -35,14 +34,15 @@ const SelectTab = ({
 const Mine = () => {
   const [mineVotes, setMineVotes] = useState<UserVoteRecord>();
   const [tips, setTips] = useState<TipsProps>();
-
+  const { backendActor } = useContext(AuthContext);
   const [items, setItems] = useState<Array<{ hash: string; title: string }>>();
   const [selectedTab, setSelectedTab] = useState<MineListType>(
     MineListType.Owned
   );
   useEffect(() => {
+    if (!backendActor) return;
     (async () => {
-      const votes = await dvote_backend.getMyVote();
+      const votes = await backendActor.getMyVote();
       console.log(votes, "getMyVote");
       if ("Err" in votes) {
         setTips({ message: getErrorMessage(votes.Err) });
@@ -50,7 +50,7 @@ const Mine = () => {
       }
       setMineVotes(votes.Ok);
     })();
-  }, []);
+  }, [backendActor]);
   useEffect(() => {
     const list = mineVotes?.[selectedTab].map(([hash, item]) => {
       return { hash, title: item.title };

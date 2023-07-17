@@ -1,16 +1,18 @@
 import { Box } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { dvote_backend } from "../../declarations/dvote_backend";
+import React, { useContext, useEffect, useState } from "react";
 import ListCard from "./components/ListCard";
 import { VoteRecord } from "../../declarations/dvote_backend/dvote_backend.did";
 import Tips, { TipsProps } from "./components/Tips";
 import { getErrorMessage } from "./utils";
+import { AuthContext } from "./components/AuthProvider";
 const Explore = () => {
   const [votes, setVotes] = useState<VoteRecord[]>();
   const [tips, setTips] = useState<TipsProps>();
+  const { backendActor } = useContext(AuthContext);
   useEffect(() => {
+    if(!backendActor) return;
     (async () => {
-      const votes = await dvote_backend.getPublicVote();
+      const votes = await backendActor.getPublicVote();
       if ("Err" in votes) {
         setTips({ message: getErrorMessage(votes.Err) });
         return;
@@ -18,7 +20,7 @@ const Explore = () => {
       setVotes(votes.Ok);
       console.log(votes.Ok, "getPublicVote");
     })();
-  }, []);
+  }, [backendActor]);
   return (
     <Box>
       {votes && <ListCard items={votes}></ListCard>}

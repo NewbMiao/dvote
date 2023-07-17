@@ -31,6 +31,7 @@ service : {
   getPublicVote : () -> (Result_2) query;
   getVote : (text) -> (Result) query;
   vote : (text, nat64) -> (Result);
+  whoami : () -> (text) query;
 }
 
 // https://github.com/dfinity/candid/blob/master/spec/Candid.md

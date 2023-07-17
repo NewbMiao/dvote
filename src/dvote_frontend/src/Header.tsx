@@ -24,11 +24,18 @@ const navItems = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const authContext = useContext(AuthContext);
+  const { loggedIn, login, logout } = useContext(AuthContext);
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
   };
-  const handleLogin = () => !authContext.loggedIn && authContext.login();
+  const loginBtnText = loggedIn ? "Logout" : "Login";
+  const handleLogin = () => {
+    if (loggedIn) {
+      logout();
+    } else {
+      login();
+    }
+  };
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
@@ -47,12 +54,12 @@ export default function Header() {
           </ListItem>
         ))}
         <ListItem
-          key={"Login"}
+          key={loginBtnText}
           disablePadding
           sx={{ textAlign: "left", display: "flex" }}
         >
           <ListItemButton>
-            <ListItemText primary={"Login"} onClick={handleLogin} />
+            <ListItemText primary={loginBtnText} onClick={handleLogin} />
           </ListItemButton>
         </ListItem>
       </List>
@@ -102,8 +109,12 @@ export default function Header() {
                 </Button>
               </StyledLink>
             ))}
-            <Button key={"Login"} sx={{ color: "#fff" }} onClick={handleLogin}>
-              Login
+            <Button
+              key={loginBtnText}
+              sx={{ color: "#fff" }}
+              onClick={handleLogin}
+            >
+              {loginBtnText}
             </Button>
           </Box>
         </Toolbar>

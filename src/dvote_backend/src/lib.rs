@@ -1,7 +1,7 @@
 mod hash;
 mod timestamp;
 mod vote;
-use candid::candid_method;
+use candid::{candid_method, Principal};
 use hash::hash_string;
 use ic_cdk::{api, storage};
 use ic_cdk_macros::*;
@@ -11,6 +11,12 @@ use vote::{CreateVoteRecord, UserVoteRecord, UserVoteStore, VoteError, VoteRecor
 thread_local! {
     static VOTE_STORE: RefCell<VoteStore> = RefCell::default();
     static USER_VOTE_STORE: RefCell<UserVoteStore> = RefCell::default();
+}
+
+#[candid_method(query, rename = "whoami")]
+#[query(name = "whoami")]
+fn whoami() -> String {
+    api::caller().to_string()
 }
 
 #[candid_method(query, rename = "getVote")]
@@ -38,7 +44,6 @@ fn get_my_vote() -> Result<UserVoteRecord, VoteError> {
 #[candid_method(query, rename = "getPublicVote")]
 #[query(name = "getPublicVote")]
 fn get_public_vote() -> Result<Vec<VoteRecord>, VoteError> {
-    let principal = api::caller();
     let votes = VOTE_STORE.with(|store| store.borrow().clone());
     if votes.is_empty() {
         return Err(VoteError::NotFound("No vote record found"));
@@ -56,6 +61,11 @@ fn get_public_vote() -> Result<Vec<VoteRecord>, VoteError> {
 #[update(name = "createVote")]
 fn create_vote(vote_req: CreateVoteRecord) -> Result<VoteRecord, VoteError> {
     let principal = api::caller();
+    if principal == Principal::anonymous() {
+        return Err(VoteError::BadRequest(
+            "Not allowed to create vote anonymously",
+        ));
+    }
     let hash = hash_string(&format!("{}{}", principal, vote_req.title.clone()));
     let expired_at = utc_sec_with_offset(60 * 60 * 24 * 7); // 7 days
     let max_selection = 1;
@@ -96,6 +106,9 @@ fn create_vote(vote_req: CreateVoteRecord) -> Result<VoteRecord, VoteError> {
 #[update(name = "vote")]
 fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
     let principal = api::caller();
+    if principal == Principal::anonymous() {
+        return Err(VoteError::BadRequest("Not allowed to vote anonymously"));
+    }
     VOTE_STORE.with(|store| {
         let mut store = store.borrow_mut();
         let vote_record = store
@@ -114,13 +127,26 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
                 "Vote item not found, index out of range",
             ));
         }
+
         // update user vote record
         USER_VOTE_STORE.with(|user_store| {
             let mut user_store = user_store.borrow_mut();
             let user_vote_record = user_store.entry(principal).or_insert(UserVoteRecord::new());
             let succeed = if vote_record.created_by == principal {
+                if user_vote_record.count_owned_vote(hash.clone()) >= vote_record.max_selection {
+                    return Err(VoteError::BadRequest(
+                        "You have already voted for the max selection",
+                    ));
+                }
                 user_vote_record.add_created_vote_index(hash.clone(), index)
             } else {
+                if user_vote_record.count_participated_vote(hash.clone())
+                    >= vote_record.max_selection
+                {
+                    return Err(VoteError::BadRequest(
+                        "You have already voted for the max selection",
+                    ));
+                }
                 user_vote_record.add_participated_vote(
                     hash.clone(),
                     index,

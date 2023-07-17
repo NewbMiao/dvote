@@ -1,41 +1,64 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { AuthClient } from "@dfinity/auth-client";
+import { HttpAgent } from "@dfinity/agent";
+import {
+  createActor,
+  dvote_backend,
+} from "../../../declarations/dvote_backend";
 
-let iiUrl: string;
-
-const local_ii_url = `http://${process.env.DVOTE_FRONTEND_CANISTER_ID}.localhost:4943`;
-
-if (process.env.DFX_NETWORK === "local") {
-  iiUrl = local_ii_url;
-} else if (process.env.DFX_NETWORK === "ic") {
-  iiUrl = `https://${process.env.DVOTE_FRONTEND_CANISTER_ID}.ic0.app`;
-} else {
-  // fall back to local
-  iiUrl = local_ii_url;
+export interface AuthContextType {
+  loggedIn: false;
+  login: () => {};
+  logout: () => {};
+  backendActor: typeof dvote_backend;
 }
-console.log("iiUrl", iiUrl);
-export const AuthContext = React.createContext({
-  loggedIn: false,
-  login: () => {},
-  logout: () => {},
-});
+export const AuthContext = React.createContext({} as AuthContextType);
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [backendActor, setActor] = useState<typeof dvote_backend>();
   useEffect(() => {
     (async () => {
       const authClient = await AuthClient.create();
       const isAuthenticated = await authClient.isAuthenticated();
       setLoggedIn(isAuthenticated);
-      console.log("isAuthenticated", isAuthenticated);
-      // !isAuthenticated && (await login());
+      console.log(
+        "isAuthenticated",
+        isAuthenticated,
+        await updateBackendActor()
+      );
     })();
+  }, []);
+  const updateBackendActor = useCallback(async () => {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    if (
+      // use local backend in local mode
+      identity.getPrincipal().isAnonymous() ||
+      !process.env.DVOTE_BACKEND_CANISTER_ID
+    ) {
+      setActor(dvote_backend);
+      return;
+    }
+    const agent = new HttpAgent({ identity });
+
+    const actor = await createActor(process.env.DVOTE_BACKEND_CANISTER_ID, {
+      agent,
+    });
+    setActor(actor);
+
+    console.log(
+      "createActor with principal",
+      identity.getPrincipal().toString(),
+      await backendActor?.whoami()
+    );
   }, []);
   const login = useCallback(async () => {
     const authClient = await AuthClient.create();
 
     await authClient.login({
-      // identityProvider: iiUrl,
-      onSuccess: () => {
+      onSuccess: async () => {
+        setLoggedIn(true);
+        await updateBackendActor();
         console.log("login success");
       },
       onError: (err) => {
@@ -48,6 +71,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       await authClient.logout();
+      await updateBackendActor();
+      setLoggedIn(false);
+      console.log("logout success");
       setLoggedIn(false);
     } catch (error) {
       console.error("Logout error:", error);
@@ -57,9 +83,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loggedIn,
     login,
     logout,
+    backendActor,
   };
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthContext.Provider value={authContextValue as AuthContextType}>
       {children}
     </AuthContext.Provider>
   );
