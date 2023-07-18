@@ -15,6 +15,7 @@ import { useParams } from "react-router-dom";
 import Processing from "./components/Processing";
 import Tips, { TipsProps } from "./components/Tips";
 import { AuthContext } from "./components/AuthProvider";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 interface VoteRecordWithPercent extends VoteRecord {
   items: Array<VoteItemWithPercent>;
   selection: number[];
@@ -100,7 +101,7 @@ const Vote = () => {
   };
   const showVoteResult = vote?.selection.length !== 0;
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="md">
       <Box
         sx={{
           display: "flex",
@@ -108,37 +109,53 @@ const Vote = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h4" my={1}>
+        <Typography variant="h4" my={1} textAlign={"center"}>
           {vote?.title}
         </Typography>
 
         {vote?.items.map((item) => {
           return (
-            <Typography
-              justifyContent={"start"}
-              variant="h6"
-              key={item.index.toString()}
-              onClick={async () => {
-                await doVote(item.index);
-              }}
-            >
-              Option - {item.name} :
-              {showVoteResult && (
-                <>
-                  {item.percent.toFixed(2)}% ({item.count.toString()}){" "}
-                  {vote.selection.includes(Number(item.index)) ? "✅" : ""}
-                </>
-              )}
+            <>
+              <Typography
+                justifyContent={"start"}
+                maxWidth={"sm"}
+                sx={{
+                  wordBreak: "break-all",
+                }}
+                variant="h6"
+                key={item.index.toString()}
+                onClick={async () => {
+                  await doVote(item.index);
+                }}
+              >
+                Option - {item.name} :
+                {showVoteResult && (
+                  <>
+                    {item.percent.toFixed(2)}% ({item.count.toString()}){" "}
+                    {vote.selection.includes(Number(item.index)) ? (
+                      <CheckCircleIcon
+                        sx={{
+                          ml: 2,
+                          verticalAlign: "middle",
+                        }}
+                        color="success"
+                      />
+                    ) : (
+                      ""
+                    )}
+                  </>
+                )}
+              </Typography>
               <LinearProgress
                 sx={{
                   height: 20,
-                  width: 300,
+                  width: { xs: "100%", sm: "500px" },
                   my: 1,
                 }}
                 variant="determinate"
                 value={showVoteResult ? item.percent : 0}
               />
-            </Typography>
+            </>
           );
         })}
         <Divider sx={{ width: "80%", my: 2 }} />
