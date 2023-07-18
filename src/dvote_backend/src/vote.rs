@@ -39,6 +39,11 @@ pub struct VoteRecord {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct VoteRecordWithSelection {
+    pub info: VoteRecord,
+    pub selection: Vec<String>,
+}
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct CreateVoteRecord {
     pub expired_at: u64,
     pub title: String,
@@ -59,13 +64,13 @@ impl UserVoteItem {
             selected: vec![],
         }
     }
-    pub fn add_selected(&mut self, index: usize) -> bool {
+    pub fn add_selected(&mut self, index: usize) -> Option<Vec<usize>> {
         let selected: &mut Vec<usize> = self.selected.as_mut();
         if selected.contains(&index) {
-            return false;
+            return None;
         }
         selected.push(index);
-        true
+        Some(selected.clone())
     }
 }
 impl UserVoteRecord {
@@ -78,33 +83,38 @@ impl UserVoteRecord {
     pub fn add_created_vote(&mut self, hash: String, title: String) {
         self.owned.insert(hash, UserVoteItem::new(title));
     }
-    pub fn add_created_vote_index(&mut self, hash: String, index: usize) -> bool {
+    pub fn add_created_vote_index(&mut self, hash: String, index: usize) -> Option<Vec<usize>> {
         let vote = self
             .owned
             .get_mut(&hash)
             .unwrap_or_else(|| trap("Failed to vote, vote record not found"));
         vote.add_selected(index)
     }
-    pub fn add_participated_vote(&mut self, hash: String, index: usize, title: String) -> bool {
+    pub fn add_participated_vote(
+        &mut self,
+        hash: String,
+        index: usize,
+        title: String,
+    ) -> Option<Vec<usize>> {
         let vote = self
             .participated
             .entry(hash)
             .or_insert(UserVoteItem::new(title));
         vote.add_selected(index)
     }
-    pub fn count_participated_vote(&self, hash: String) -> u8 {
+    pub fn count_participated_vote(&self, hash: String) -> usize {
         // count the number of selected items no error
         let vote = self.participated.get(&hash);
         match vote {
-            Some(vote) => vote.selected.len() as u8,
+            Some(vote) => vote.selected.len(),
             None => 0,
         }
     }
-    pub fn count_owned_vote(&self, hash: String) -> u8 {
+    pub fn count_owned_vote(&self, hash: String) -> usize {
         // count the number of selected items no error
         let vote = self.owned.get(&hash);
         match vote {
-            Some(vote) => vote.selected.len() as u8,
+            Some(vote) => vote.selected.len() as usize,
             None => 0,
         }
     }

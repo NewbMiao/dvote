@@ -15,6 +15,7 @@ import Tips, { TipsProps } from "./components/Tips";
 import { CreateVoteRecord } from "../../declarations/dvote_backend/dvote_backend.did";
 import { getErrorMessage } from "./utils";
 import { AuthContext } from "./components/AuthProvider";
+import Processing from "./components/Processing";
 const Create = () => {
   const [title, setTitle] = useState("");
   const [maxSelection, setMaxSelection] = useState(1);
@@ -22,6 +23,8 @@ const Create = () => {
   const [expiredDate, setExpiredDate] = useState<Dayjs>(dayjs().add(7, "day"));
   const [items, setItems] = useState(["", ""]);
   const [tips, setTips] = useState<TipsProps>();
+  const [loading, setLoading] = useState(false);
+
   const { loggedIn, backendActor } = useContext(AuthContext);
 
   const handleItemsChange = (index: number) => (event: any) => {
@@ -46,13 +49,20 @@ const Create = () => {
       public: publicVote,
       names: items.filter((item) => item !== "").map((item) => item.trim()),
     } as CreateVoteRecord;
-    const res = await backendActor.createVote(voteRecord);
-    if ("Err" in res) {
-      setTips({ message: getErrorMessage(res.Err) });
-      return;
+    try {
+      setLoading(true);
+      const res = await backendActor.createVote(voteRecord);
+      setLoading(false);
+
+      if ("Err" in res) {
+        setTips({ message: getErrorMessage(res.Err) });
+        return;
+      }
+      console.log(res, "createVote");
+      setTips({ message: "Create vote succeed!", severity: "success" });
+    } catch (error) {
+      setLoading(false);
     }
-    console.log(res, "createVote");
-    setTips({ message: "Create vote succeed!", severity: "success" });
 
     // Perform any necessary actions with the voteRecord object
     console.log(voteRecord);
@@ -188,6 +198,7 @@ const Create = () => {
           </Button>
         </Box>
       </form>
+      <Processing open={loading} />
       {tips && (
         <Tips
           message={tips.message}

@@ -8,6 +8,7 @@ type CreateVoteRecord = record {
 type Result = variant { Ok : VoteRecord; Err : VoteError };
 type Result_1 = variant { Ok : UserVoteRecord; Err : VoteError };
 type Result_2 = variant { Ok : vec VoteRecord; Err : VoteError };
+type Result_3 = variant { Ok : VoteRecordWithSelection; Err : VoteError };
 type UserVoteItem = record { title : text; selected : vec nat64 };
 type UserVoteRecord = record {
   participated : vec record { text; UserVoteItem };
@@ -25,12 +26,16 @@ type VoteRecord = record {
   expired_at : nat64;
   max_selection : nat8;
 };
+type VoteRecordWithSelection = record {
+  info : VoteRecord;
+  selection : vec text;
+};
 service : {
   createVote : (CreateVoteRecord) -> (Result);
   getMyVote : () -> (Result_1) query;
   getPublicVote : () -> (Result_2) query;
-  getVote : (text) -> (Result) query;
-  vote : (text, nat64) -> (Result);
+  getVote : (text) -> (Result_3) query;
+  vote : (text, nat64) -> (Result_3);
   whoami : () -> (text) query;
 }
 

@@ -7,7 +7,10 @@ use ic_cdk::{api, storage};
 use ic_cdk_macros::*;
 use std::cell::RefCell;
 use timestamp::utc_sec_with_offset;
-use vote::{CreateVoteRecord, UserVoteRecord, UserVoteStore, VoteError, VoteRecord, VoteStore};
+use vote::{
+    CreateVoteRecord, UserVoteRecord, UserVoteStore, VoteError, VoteRecord,
+    VoteRecordWithSelection, VoteStore,
+};
 thread_local! {
     static VOTE_STORE: RefCell<VoteStore> = RefCell::default();
     static USER_VOTE_STORE: RefCell<UserVoteStore> = RefCell::default();
@@ -21,10 +24,36 @@ fn whoami() -> String {
 
 #[candid_method(query, rename = "getVote")]
 #[query(name = "getVote")]
-fn get_vote(hash: String) -> Result<VoteRecord, VoteError> {
+fn get_vote(hash: String) -> Result<VoteRecordWithSelection, VoteError> {
+    let principal = api::caller();
     VOTE_STORE.with(|store| {
-        let tmp = store.borrow().get(&hash).cloned();
-        tmp.ok_or(VoteError::NotFound("Vote record not found"))
+        if let Some(vote) = store.borrow().get(&hash).cloned() {
+            let selection = USER_VOTE_STORE.with(|user_store| {
+                if let Some(user_vote_record) = user_store.borrow().get(&principal).cloned() {
+                    let vote_item = match vote.created_by == principal {
+                        true => user_vote_record.owned.get(&hash).cloned(),
+                        false => user_vote_record.participated.get(&hash).cloned(),
+                    };
+                    if let Some(vote_item) = vote_item {
+                        Some(vote_item.selected)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            });
+            Ok(VoteRecordWithSelection {
+                info: vote,
+                selection: selection
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect(),
+            })
+        } else {
+            return Err(VoteError::NotFound("Vote record not found"));
+        }
     })
 }
 
@@ -104,7 +133,7 @@ fn create_vote(vote_req: CreateVoteRecord) -> Result<VoteRecord, VoteError> {
 
 #[candid_method(update, rename = "vote")]
 #[update(name = "vote")]
-fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
+fn vote(hash: String, index: usize) -> Result<VoteRecordWithSelection, VoteError> {
     let principal = api::caller();
     if principal == Principal::anonymous() {
         return Err(VoteError::BadRequest("Not allowed to vote anonymously"));
@@ -132,8 +161,10 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
         USER_VOTE_STORE.with(|user_store| {
             let mut user_store = user_store.borrow_mut();
             let user_vote_record = user_store.entry(principal).or_insert(UserVoteRecord::new());
-            let succeed = if vote_record.created_by == principal {
-                if user_vote_record.count_owned_vote(hash.clone()) >= vote_record.max_selection {
+            let valid_selection = if vote_record.created_by == principal {
+                if user_vote_record.count_owned_vote(hash.clone())
+                    >= vote_record.max_selection as usize
+                {
                     return Err(VoteError::BadRequest(
                         "You have already voted for the max selection",
                     ));
@@ -141,7 +172,7 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
                 user_vote_record.add_created_vote_index(hash.clone(), index)
             } else {
                 if user_vote_record.count_participated_vote(hash.clone())
-                    >= vote_record.max_selection
+                    >= vote_record.max_selection as usize
                 {
                     return Err(VoteError::BadRequest(
                         "You have already voted for the max selection",
@@ -153,11 +184,18 @@ fn vote(hash: String, index: usize) -> Result<VoteRecord, VoteError> {
                     vote_record.title.clone(),
                 )
             };
-            if !succeed {
+            if valid_selection.is_none() {
                 return Err(VoteError::BadRequest("You already voted for this vote"));
             }
-            vote_record.items[index].count += 1;
-            Ok(vote_record.clone())
+            vote_record.items[index as usize].count += 1;
+            Ok(VoteRecordWithSelection {
+                info: vote_record.clone(),
+                selection: valid_selection
+                    .unwrap()
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect(),
+            })
         })
     })
 }

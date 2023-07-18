@@ -1,4 +1,10 @@
-import { Box, Typography, LinearProgress, Container } from "@mui/material";
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  Container,
+  Divider,
+} from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
 import {
   VoteItem,
@@ -11,17 +17,13 @@ import Tips, { TipsProps } from "./components/Tips";
 import { AuthContext } from "./components/AuthProvider";
 interface VoteRecordWithPercent extends VoteRecord {
   items: Array<VoteItemWithPercent>;
+  selection: number[];
 }
 
 interface VoteItemWithPercent extends VoteItem {
   percent: number;
 }
-function getRandomAlphabet() {
-  const alphabets = "abcdefghijklmnopqrstuvwxyz";
-  const randomIndex = Math.floor(Math.random() * alphabets.length);
-  const randomAlphabet = alphabets[randomIndex].toUpperCase();
-  return randomAlphabet;
-}
+
 const Vote = () => {
   const { hash } = useParams<{ hash: string }>();
   const [vote, setVote] = useState<VoteRecordWithPercent>();
@@ -29,7 +31,8 @@ const Vote = () => {
   const [tips, setTips] = useState<TipsProps>();
   const { loggedIn, backendActor } = useContext(AuthContext);
 
-  const updateVoteWithPercent = (voteRecord: VoteRecord) => {
+  const updateVoteWithPercent = (voteRecord: VoteRecord, selection = []) => {
+    console.log(selection, "selection");
     const sum = voteRecord.items.reduce((acc, item) => {
       return acc + Number(item.count);
     }, 0);
@@ -42,7 +45,7 @@ const Vote = () => {
           Number(item.count) === 0 ? 0 : (Number(item.count) / sum) * 100,
       };
     });
-    setVote({ ...voteRecord, items: tmp });
+    setVote({ ...voteRecord, items: tmp, selection });
   };
   useEffect(() => {
     if (!hash || !backendActor) return;
@@ -53,8 +56,13 @@ const Vote = () => {
         setTips({ message: getErrorMessage(res.Err), severity: "error" });
         return;
       }
+
       if (res.Ok) {
-        updateVoteWithPercent(res.Ok);
+        updateVoteWithPercent(
+          res.Ok.info,
+          // @ts-ignore
+          res.Ok.selection.map((x) => Number(x))
+        );
       }
     })();
   }, [backendActor]);
@@ -79,12 +87,18 @@ const Vote = () => {
       setTips({ message: "vote succeed!", severity: "success" });
 
       console.log(res, "doVote");
-      res.Ok && updateVoteWithPercent(res.Ok);
+      res.Ok &&
+        updateVoteWithPercent(
+          res.Ok.info,
+          // @ts-ignore
+          res.Ok.selection.map((x) => Number(x))
+        );
     } catch (error) {
       setLoading(false);
       console.log(error, "doVote error");
     }
   };
+  const showVoteResult = vote?.selection.length !== 0;
   return (
     <Container maxWidth="sm">
       <Box
@@ -101,22 +115,38 @@ const Vote = () => {
         {vote?.items.map((item) => {
           return (
             <Typography
+              justifyContent={"start"}
               variant="h6"
               key={item.index.toString()}
               onClick={async () => {
                 await doVote(item.index);
               }}
             >
-              {item.name} : {item.percent.toFixed(2)}% ({item.count.toString()})
+              Option - {item.name} :
+              {showVoteResult && (
+                <>
+                  {item.percent.toFixed(2)}% ({item.count.toString()}){" "}
+                  {vote.selection.includes(Number(item.index)) ? "✅" : ""}
+                </>
+              )}
               <LinearProgress
-                sx={{ height: 20, width: 300, my: 1 }}
+                sx={{
+                  height: 20,
+                  width: 300,
+                  my: 1,
+                }}
                 variant="determinate"
-                value={item.percent}
+                value={showVoteResult ? item.percent : 0}
               />
             </Typography>
           );
         })}
+        <Divider sx={{ width: "80%", my: 2 }} />
+        <Typography>
+          Tips: Click option to vote and max selection is {vote?.max_selection}.
+        </Typography>
       </Box>
+
       <Processing open={loading} />
       {tips && (
         <Tips
