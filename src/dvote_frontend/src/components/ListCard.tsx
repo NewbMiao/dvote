@@ -43,16 +43,13 @@ const ListCard = ({
               }}
             ></CardHeader>
             <CardContent>
-              <Typography
-                variant="h5"
-                // color={getColorFromString(title)}
-                my={2}
-                gutterBottom
-              >
+              <Typography variant="h5" my={2} gutterBottom>
                 {title}
               </Typography>
 
-              <Typography variant="subtitle2">{hash}</Typography>
+              <Typography variant="subtitle2" color={"GrayText"}>
+                {hash}
+              </Typography>
             </CardContent>
             <CardActions>
               <StyledLink to={`/vote/${hash}`}>

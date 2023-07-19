@@ -16,6 +16,9 @@ import Processing from "./components/Processing";
 import Tips, { TipsProps } from "./components/Tips";
 import { AuthContext } from "./components/AuthProvider";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AlertDialog, { AlertDialogProps } from "./components/Dialog";
+import Countdown from "./components/Countdown";
+import dayjs from "dayjs";
 interface VoteRecordWithPercent extends VoteRecord {
   items: Array<VoteItemWithPercent>;
   selection: number[];
@@ -30,6 +33,9 @@ const Vote = () => {
   const [vote, setVote] = useState<VoteRecordWithPercent>();
   const [loading, setLoading] = useState(false);
   const [tips, setTips] = useState<TipsProps>();
+  const [openConfirm, setOpenConfirm] = useState<AlertDialogProps>(
+    {} as AlertDialogProps
+  );
   const { loggedIn, backendActor } = useContext(AuthContext);
 
   const updateVoteWithPercent = (voteRecord: VoteRecord, selection = []) => {
@@ -72,10 +78,7 @@ const Vote = () => {
     if (!hash) {
       return;
     }
-    if (!loggedIn) {
-      setTips({ message: "Please login first!", severity: "error" });
-      return;
-    }
+
     try {
       setLoading(true);
       const res = await backendActor.vote(hash, index);
@@ -99,7 +102,31 @@ const Vote = () => {
       console.log(error, "doVote error");
     }
   };
-  const showVoteResult = vote?.selection.length !== 0;
+  const handleVote = async (index: bigint) => {
+    if (isExpired) {
+      return;
+    }
+    if (!loggedIn) {
+      setTips({ message: "Please login first!", severity: "error" });
+      return;
+    }
+    setOpenConfirm({
+      title: "Confirm",
+      content: "Are you sure to vote this option?",
+      open: true,
+      onOk: async () => {
+        await doVote(index);
+      },
+      onClose: () => {
+        setOpenConfirm({} as AlertDialogProps);
+      },
+    });
+  };
+  const remainingTime = Number(vote?.expired_at) - dayjs().unix();
+  const isExpired = remainingTime < 0;
+  const showVoteResult =
+    isExpired || (loggedIn && vote?.selection.length !== 0);
+
   return (
     <Container maxWidth="md">
       <Box
@@ -109,24 +136,23 @@ const Vote = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h4" my={1} textAlign={"center"}>
+        <Typography variant="h4" fontWeight={600} my={1} textAlign={"center"}>
           {vote?.title}
         </Typography>
 
         {vote?.items.map((item) => {
           return (
-            <>
+            <div key={item.name}>
               <Typography
                 justifyContent={"start"}
                 maxWidth={"sm"}
+                my={1}
                 sx={{
                   wordBreak: "break-all",
                 }}
                 variant="h6"
                 key={item.index.toString()}
-                onClick={async () => {
-                  await doVote(item.index);
-                }}
+                onClick={() => handleVote(item.index)}
               >
                 Option - {item.name} :
                 {showVoteResult && (
@@ -154,13 +180,48 @@ const Vote = () => {
                 }}
                 variant="determinate"
                 value={showVoteResult ? item.percent : 0}
+                onClick={() => handleVote(item.index)}
               />
-            </>
+            </div>
           );
         })}
+
+        <Typography color={"GrayText"} my={0.5} textAlign={"center"}>
+          Vote started on{" "}
+          {dayjs(Number(vote?.created_at) * 1000)
+            .locale("en")
+            .format("LLL")
+            .toLocaleString()}
+        </Typography>
+        {remainingTime && (
+          <Typography color={"GrayText"} my={0.5}>
+            Will end after
+            <span
+              style={{
+                fontStyle: "oblique",
+                color: "red",
+              }}
+            >
+              <Countdown durationInSec={remainingTime} />
+            </span>
+          </Typography>
+        )}
+        {isExpired && (
+          <Typography color={"GrayText"} my={0.5}>
+            Has ended on{" "}
+            {dayjs(Number(vote?.expired_at) * 1000)
+              .locale("en")
+              .format("LLL")
+              .toLocaleString()}
+          </Typography>
+        )}
+        <Typography color={"GrayText"} my={0.5}>
+          Created by {vote?.created_by.toString()}
+        </Typography>
         <Divider sx={{ width: "80%", my: 2 }} />
         <Typography>
-          Tips: Click option to vote and max selection is {vote?.max_selection}.
+          Tips: Click on an option to vote. You can select a maximum of{" "}
+          {vote?.max_selection} option
         </Typography>
       </Box>
 
@@ -172,6 +233,7 @@ const Vote = () => {
           onClose={() => setTips(undefined)}
         />
       )}
+      {openConfirm.open && <AlertDialog {...openConfirm} />}
     </Container>
   );
 };
