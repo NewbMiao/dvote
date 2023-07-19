@@ -10,7 +10,7 @@ import {
   VoteItem,
   VoteRecord,
 } from "../../declarations/dvote_backend/dvote_backend.did";
-import { getErrorMessage } from "./utils";
+import { getErrorMessage, numberToLetter } from "./utils";
 import { useParams } from "react-router-dom";
 import Processing from "./components/Processing";
 import Tips, { TipsProps } from "./components/Tips";
@@ -52,6 +52,10 @@ const Vote = () => {
           Number(item.count) === 0 ? 0 : (Number(item.count) / sum) * 100,
       };
     });
+    if (voteRecord?.created_by.toString() === "2vxsx-fae" && !loggedIn) {
+      // fix annoymous vote bug
+      selection = [];
+    }
     setVote({ ...voteRecord, items: tmp, selection });
   };
   useEffect(() => {
@@ -102,18 +106,32 @@ const Vote = () => {
       console.log(error, "doVote error");
     }
   };
-  const handleVote = async (index: bigint) => {
+  const couldVote = (index: bigint) => {
     if (isExpired) {
-      return;
+      console.log("isExpired");
+      return false;
     }
-    if (!loggedIn) {
-      setTips({ message: "Please login first!", severity: "error" });
-      return;
-    }
+
     if (
       vote?.selection.includes(Number(index)) ||
       (vote?.max_selection && vote?.selection.length >= vote?.max_selection)
     ) {
+      console.log(
+        "vote?.selection.includes(Number(index))",
+        vote?.selection.includes(Number(index)),
+        vote?.max_selection,
+        vote?.selection.length >= vote?.max_selection
+      );
+      return false;
+    }
+    return true;
+  };
+  const handleVote = async (index: bigint) => {
+    if (!couldVote(index)) {
+      return;
+    }
+    if (!loggedIn) {
+      setTips({ message: "Please login first!", severity: "error" });
       return;
     }
     setOpenConfirm({
@@ -149,21 +167,27 @@ const Vote = () => {
 
         {vote?.items.map((item) => {
           return (
-            <div key={item.name}>
+            <Box
+              key={item.name}
+              onClick={() => handleVote(item.index)}
+              sx={{
+                my: 0.5,
+                width: { xs: "100%", sm: "500px" },
+                wordBreak: "break-all",
+                cursor: couldVote(item.index) ? "pointer" : "default",
+              }}
+            >
               <Typography
                 justifyContent={"start"}
                 maxWidth={"sm"}
-                my={1}
-                sx={{
-                  wordBreak: "break-all",
-                }}
+                mb={1}
                 variant="h6"
                 key={item.index.toString()}
-                onClick={() => handleVote(item.index)}
               >
-                Option - {item.name} :
+                {numberToLetter(Number(item.index))} - {item.name}
                 {showVoteResult && (
                   <>
+                    {" : "}
                     {item.percent.toFixed(2)}% ({item.count.toString()}){" "}
                     {vote.selection.includes(Number(item.index)) ? (
                       <CheckCircleIcon
@@ -182,14 +206,14 @@ const Vote = () => {
               <LinearProgress
                 sx={{
                   height: 20,
-                  width: { xs: "100%", sm: "500px" },
-                  my: 1,
+                  width: "100%",
+                  mb: 1,
                 }}
                 variant="determinate"
                 value={showVoteResult ? item.percent : 0}
                 onClick={() => handleVote(item.index)}
               />
-            </div>
+            </Box>
           );
         })}
 
@@ -228,7 +252,7 @@ const Vote = () => {
         <Divider sx={{ width: "80%", my: 2 }} />
         <Typography>
           Tips: Click on an option to vote. You can select a maximum of{" "}
-          {vote?.max_selection} option
+          {vote?.max_selection} option.
         </Typography>
       </Box>
 
