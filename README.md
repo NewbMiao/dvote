@@ -65,6 +65,12 @@ If you are hosting frontend code somewhere without using DFX, you may need to ma
 
 > https://internetcomputer.org/docs/current/developer-docs/setup/cycles/cycles-faucet
 
+> https://internetcomputer.org/docs/current/developer-docs/setup/cycles/cycles-wallet
+
+> https://nns.ic0.app/ (add nns principal controller to link canister there)
+
 ## Deploy
 
-> https://internetcomputer.org/docs/current/developer-docs/setup/cycles/cycles-faucet > https://internetcomputer.org/docs/current/developer-docs/setup/deploy-mainnet > https://internetcomputer.org/docs/current/tutorials/deploy_sample_app
+> https://internetcomputer.org/docs/current/developer-docs/setup/deploy-mainnet
+
+> https://internetcomputer.org/docs/current/tutorials/deploy_sample_app

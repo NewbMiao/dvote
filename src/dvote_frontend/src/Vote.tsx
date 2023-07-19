@@ -110,6 +110,12 @@ const Vote = () => {
       setTips({ message: "Please login first!", severity: "error" });
       return;
     }
+    if (
+      vote?.selection.includes(Number(index)) ||
+      (vote?.max_selection && vote?.selection.length >= vote?.max_selection)
+    ) {
+      return;
+    }
     setOpenConfirm({
       title: "Confirm",
       content: "Are you sure to vote this option?",
@@ -127,6 +133,7 @@ const Vote = () => {
   const showVoteResult =
     isExpired || (loggedIn && vote?.selection.length !== 0);
 
+  if (!vote?.title) return null;
   return (
     <Container maxWidth="md">
       <Box
