@@ -175,6 +175,18 @@ const Vote = () => {
                 width: { xs: "100%", sm: "500px" },
                 wordBreak: "break-all",
                 cursor: couldVote(item.index) ? "pointer" : "default",
+                ...(couldVote(item.index)
+                  ? {
+                      "&:hover": {
+                        scale: "1.05",
+                        padding: 1,
+                        border: "3px solid transparent",
+                        borderImage: "linear-gradient(to right, #f06, #0cf)",
+                        borderImageSlice: 1,
+                        transition: "border-color 0.3s ease-in-out",
+                      },
+                    }
+                  : {}),
               }}
             >
               <Typography
