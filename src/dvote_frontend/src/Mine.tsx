@@ -34,13 +34,13 @@ const SelectTab = ({
 const Mine = () => {
   const [mineVotes, setMineVotes] = useState<UserVoteRecord>();
   const [tips, setTips] = useState<TipsProps>();
-  const { backendActor } = useContext(AuthContext);
+  const { loggedIn, backendActor } = useContext(AuthContext);
   const [items, setItems] = useState<Array<{ hash: string; title: string }>>();
   const [selectedTab, setSelectedTab] = useState<MineListType>(
     MineListType.Owned
   );
   useEffect(() => {
-    if (!backendActor) return;
+    if (!loggedIn || !backendActor) return;
     (async () => {
       const votes = await backendActor.getMyVote();
       console.log(votes, "getMyVote");
@@ -50,7 +50,7 @@ const Mine = () => {
       }
       setMineVotes(votes.Ok);
     })();
-  }, [backendActor]);
+  }, [backendActor, loggedIn]);
   useEffect(() => {
     const list = mineVotes?.[selectedTab].map(([hash, item]) => {
       return { hash, title: item.title };
