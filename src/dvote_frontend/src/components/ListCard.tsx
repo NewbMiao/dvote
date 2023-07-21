@@ -34,6 +34,7 @@ const ListCard = ({
           <Card
             sx={{
               width: 280,
+              alignSelf: "flex-start",
             }}
             key={hash}
           >
@@ -43,7 +44,14 @@ const ListCard = ({
               }}
             ></CardHeader>
             <CardContent>
-              <Typography variant="h5" my={2} gutterBottom>
+              <Typography
+                variant="h5"
+                my={2}
+                gutterBottom
+                sx={{
+                  wordBreak: "break-all",
+                }}
+              >
                 {title}
               </Typography>
 

@@ -6,7 +6,6 @@ use hash::hash_string;
 use ic_cdk::{api, storage};
 use ic_cdk_macros::*;
 use std::cell::RefCell;
-use timestamp::utc_sec_with_offset;
 use vote::{
     CreateVoteRecord, UserVoteRecord, UserVoteStore, VoteError, VoteRecord,
     VoteRecordWithSelection, VoteStore,
@@ -96,18 +95,15 @@ fn create_vote(vote_req: CreateVoteRecord) -> Result<VoteRecord, VoteError> {
         ));
     }
     let hash = hash_string(&format!("{}{}", principal, vote_req.title.clone()));
-    let expired_at = utc_sec_with_offset(60 * 60 * 24 * 7); // 7 days
-    let max_selection = 1;
-    let public = true;
     VOTE_STORE.with(|store| {
         let mut store = store.borrow_mut();
         let vote_record = store.entry(hash.to_string()).or_insert(VoteRecord::new(
             principal,
             vote_req.title.clone(),
             hash.to_string(),
-            expired_at,
-            max_selection,
-            public,
+            vote_req.expired_at,
+            vote_req.max_selection,
+            vote_req.public,
         ));
         if vote_record.has_voted() {
             return Err(VoteError::BadRequest(
