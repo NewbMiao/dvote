@@ -236,7 +236,7 @@ const Vote = () => {
             .format("LLL")
             .toLocaleString()}
         </Typography>
-        {remainingTime && (
+        {!isExpired && (
           <Typography color={"GrayText"} my={0.5}>
             Will end after
             <span
